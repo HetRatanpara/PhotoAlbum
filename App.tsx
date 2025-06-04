@@ -1,13 +1,9 @@
+// App.tsx
 import React from 'react';
-import {SafeAreaView} from 'react-native';
-import HomeScreen from './src/screens/HomeScreen';
+import AppNavigator from './src/navigation/AppNavigator';
 
 const App = () => {
-  return (
-    <SafeAreaView style={{flex: 1}}>
-      <HomeScreen />
-    </SafeAreaView>
-  );
+  return <AppNavigator />;
 };
 
 export default App;

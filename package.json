@@ -10,11 +10,19 @@
     "test": "jest"
   },
   "dependencies": {
+    "@react-native-picker/picker": "^2.4.11",
+    "@react-navigation/native": "^6.1.7",
+    "@react-navigation/stack": "^6.3.12",
     "react": "19.0.0",
     "react-native": "0.79.2",
     "react-native-blob-util": "^0.22.2",
     "react-native-fs": "^2.20.0",
-    "react-native-image-crop-picker": "^0.50.1"
+    "react-native-gesture-handler": "^2.25.0",
+    "react-native-image-crop-picker": "^0.50.1",
+    "react-native-safe-area-context": "^5.4.1",
+    "react-native-screens": "^4.11.1",
+    "react-native-uuid": "^2.0.3",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

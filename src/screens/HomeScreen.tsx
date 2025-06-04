@@ -1,34 +1,132 @@
+// src/screens/HomeScreen.tsx
 import React, {useState} from 'react';
-import {View, ScrollView, Image, StyleSheet} from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  ScrollView,
+  Button,
+  Alert,
+  StyleSheet,
+  ActivityIndicator,
+} from 'react-native';
+import {Picker} from '@react-native-picker/picker';
+import {PHOTOS_PER_PAGE_OPTIONS} from '../constants/layout';
 import ImagePickerButton from '../components/ImagePickerButton';
+import PhotoGrid from '../components/PhotoGrid';
+import {saveNewAlbum, AlbumMetadata} from '../utils/AlbumStorage';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {RootStackParamList} from '../navigation/AppNavigator';
 
-const HomeScreen = () => {
-  const [imageUris, setImageUris] = useState<string[]>([]);
+type HomeScreenNavProp = StackNavigationProp<RootStackParamList, 'Home'>;
+
+interface HomeScreenProps {
+  navigation: HomeScreenNavProp;
+}
+
+const HomeScreen: React.FC<HomeScreenProps> = ({navigation}) => {
+  const [selectedPaths, setSelectedPaths] = useState<string[]>([]);
+  const [photosPerPage, setPhotosPerPage] = useState<number>(4);
+  const [albumName, setAlbumName] = useState<string>('My Album');
+  const [saving, setSaving] = useState<boolean>(false);
+
+  const onSaveAlbum = async () => {
+    if (selectedPaths.length === 0) {
+      Alert.alert('No Photos Selected', 'Please select at least one photo.');
+      return;
+    }
+    if (albumName.trim().length === 0) {
+      Alert.alert('Invalid Name', 'Please enter an album name.');
+      return;
+    }
+    // Double-check permissions again before saving:
+    // (You could repeat the same permission check you did in ImagePickerButton)
+    setSaving(true);
+    try {
+      const metadata: AlbumMetadata = await saveNewAlbum(
+        selectedPaths,
+        photosPerPage,
+        albumName,
+      );
+      setSaving(false);
+      navigation.navigate('Album', {albumId: metadata.id});
+    } catch (err) {
+      console.warn('Error saving album', err);
+      setSaving(false);
+      // saveNewAlbum already shows an Alert with the detailed message
+    }
+  };
 
   return (
-    <View style={styles.container}>
-      <ImagePickerButton onImagesSelected={setImageUris} />
-      <ScrollView contentContainerStyle={styles.imageGrid}>
-        {imageUris.map((uri, index) => (
-          <Image key={index} source={{uri}} style={styles.image} />
-        ))}
-      </ScrollView>
-    </View>
+    <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.label}>Album Name</Text>
+      <TextInput
+        style={styles.input}
+        value={albumName}
+        onChangeText={setAlbumName}
+        placeholder="Enter album name"
+      />
+
+      <Text style={styles.label}>Photos Per Page</Text>
+      <View style={styles.pickerContainer}>
+        <Picker
+          selectedValue={photosPerPage}
+          onValueChange={val => setPhotosPerPage(val)}>
+          {PHOTOS_PER_PAGE_OPTIONS.map(opt => (
+            <Picker.Item key={opt} label={`${opt}`} value={opt} />
+          ))}
+        </Picker>
+      </View>
+
+      <Text style={styles.label}>Select Photos</Text>
+      <ImagePickerButton onImagesPicked={setSelectedPaths} />
+
+      {selectedPaths.length > 0 && (
+        <>
+          <Text style={{marginVertical: 10, fontWeight: '600'}}>
+            Preview ({selectedPaths.length} selected)
+          </Text>
+          {/* Instead of giving a fixed height, let it expand. The ScrollView parent will allow vertical scrolling. */}
+          <PhotoGrid
+            uris={selectedPaths.map(p => 'file://' + p)}
+            numColumns={3}
+          />
+        </>
+      )}
+
+      <View style={{marginVertical: 20}}>
+        {saving ? (
+          <ActivityIndicator size="large" />
+        ) : (
+          <Button title="Save Album" onPress={onSaveAlbum} />
+        )}
+      </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {flex: 1, padding: 20},
-  imageGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    justifyContent: 'center',
+  container: {
+    padding: 15,
   },
-  image: {
-    width: 100,
-    height: 100,
-    borderRadius: 8,
+  label: {
+    fontSize: 16,
+    marginTop: 10,
+    fontWeight: '500',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 4,
+    padding: 8,
+    marginTop: 5,
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 4,
+    marginTop: 5,
+    overflow: 'hidden',
   },
 });
 
