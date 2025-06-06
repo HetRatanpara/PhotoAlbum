@@ -1,4 +1,3 @@
-// src/components/ImagePickerButton.tsx
 import React from 'react';
 import {
   View,
@@ -54,6 +53,7 @@ const ImagePickerButton: React.FC<Props> = ({onImagesPicked}) => {
       const images: ImageOrVideo[] = await ImagePicker.openPicker({
         multiple: true,
         mediaType: 'photo',
+        maxFiles: 6,
       });
 
       const paths = images.map(img => img.path);

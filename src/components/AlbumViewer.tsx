@@ -1,4 +1,3 @@
-// src/components/AlbumViewer.tsx
 import React from 'react';
 import {View, Dimensions, StyleSheet, FlatList, ViewToken} from 'react-native';
 import PhotoGrid from './PhotoGrid';

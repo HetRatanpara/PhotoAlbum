@@ -1,4 +1,3 @@
-// src/screens/AlbumScreen.tsx
 import React, {useEffect, useState} from 'react';
 import {View, ActivityIndicator, StyleSheet, Text} from 'react-native';
 import {RouteProp} from '@react-navigation/native';

@@ -1,4 +1,3 @@
-// src/utils/AlbumStorage.ts
 import RNFS from 'react-native-fs';
 import {copyFileTo, ensureDir} from './FileUtils';
 import uuid from 'react-native-uuid';

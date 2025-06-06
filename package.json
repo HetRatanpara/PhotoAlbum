@@ -11,7 +11,12 @@
   },
   "dependencies": {
     "@react-native-picker/picker": "^2.4.11",
+    "@react-native-vector-icons/evil-icons": "^12.0.0",
+    "@react-native-vector-icons/fontawesome": "^12.0.0",
+    "@react-native-vector-icons/fontawesome6": "^12.0.0",
+    "@react-navigation/bottom-tabs": "^6.0.0",
     "@react-navigation/native": "^6.1.7",
+    "@react-navigation/native-stack": "^6.0.0",
     "@react-navigation/stack": "^6.3.12",
     "react": "19.0.0",
     "react-native": "0.79.2",
@@ -22,6 +27,7 @@
     "react-native-safe-area-context": "^5.4.1",
     "react-native-screens": "^4.11.1",
     "react-native-uuid": "^2.0.3",
+    "react-native-vector-icons": "^10.2.0",
     "uuid": "^9.0.0"
   },
   "devDependencies": {

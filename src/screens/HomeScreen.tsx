@@ -1,4 +1,3 @@
-// src/screens/HomeScreen.tsx
 import React, {useState} from 'react';
 import {
   View,
@@ -66,7 +65,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({navigation}) => {
         onChangeText={setAlbumName}
         placeholder="Enter album name"
       />
-
       <Text style={styles.label}>Photos Per Page</Text>
       <View style={styles.pickerContainer}>
         <Picker
@@ -77,10 +75,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({navigation}) => {
           ))}
         </Picker>
       </View>
-
       <Text style={styles.label}>Select Photos</Text>
       <ImagePickerButton onImagesPicked={setSelectedPaths} />
-
       {selectedPaths.length > 0 && (
         <>
           <Text style={{marginVertical: 10, fontWeight: '600'}}>
@@ -93,7 +89,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({navigation}) => {
           />
         </>
       )}
-
       <View style={{marginVertical: 20}}>
         {saving ? (
           <ActivityIndicator size="large" />

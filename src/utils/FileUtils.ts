@@ -1,4 +1,3 @@
-// src/utils/FileUtils.ts
 import RNFS from 'react-native-fs';
 import {Platform} from 'react-native';
 import RNBlobUtil from 'react-native-blob-util';
