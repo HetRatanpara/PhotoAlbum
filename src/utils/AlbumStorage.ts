@@ -22,10 +22,6 @@ export function getAlbumsRootPath(): string {
  *  - Create unique folder under Albums/<albumId>
  *  - Copy each selected image into that folder
  *  - Write album.json metadata inside the folder
- *
- * selectedPaths: array of picker temp paths (e.g., '/…/Cache/IMG_12345.jpg')
- * photosPerPage: number of photos per page (1/2/4/6)
- * albumName: user-defined album name
  */
 export async function saveNewAlbum(
   selectedPaths: string[],
@@ -36,17 +32,13 @@ export async function saveNewAlbum(
     const albumsRoot = getAlbumsRootPath();
     console.log('[AlbumStorage] albumsRoot =', albumsRoot);
 
-    // 1) Ensure Albums root exists
     await ensureDir(albumsRoot);
 
-    // 2) Create a unique album ID & folder
     const albumId = uuid.v4();
     const albumFolder = `${albumsRoot}/${albumId}`;
     console.log('[AlbumStorage] Creating album folder:', albumFolder);
-
     await ensureDir(albumFolder);
 
-    // 3) Copy each selected image into albumFolder
     const savedURIs: string[] = [];
     for (let i = 0; i < selectedPaths.length; i++) {
       const original = selectedPaths[i];
@@ -57,7 +49,6 @@ export async function saveNewAlbum(
       savedURIs.push(fileUri);
     }
 
-    // 4) Write the metadata JSON
     const metadata: AlbumMetadata = {
       id: albumId,
       name: albumName,
@@ -73,12 +64,10 @@ export async function saveNewAlbum(
     return metadata;
   } catch (error: any) {
     console.error('[AlbumStorage] Failed to save album:', error);
-    // Optionally show an alert so the user sees the reason:
     Alert.alert(
       'Save Album Error',
       `Could not save album: ${error.message || error}`,
     );
-    // Rethrow so the caller knows it failed
     throw error;
   }
 }
@@ -91,4 +80,44 @@ export async function loadAlbum(albumId: string): Promise<AlbumMetadata> {
   const content = await RNFS.readFile(metaPath, 'utf8');
   const metadata: AlbumMetadata = JSON.parse(content);
   return metadata;
+}
+
+/**
+ * ✅ Load all album metadata from Albums directory
+ */
+export async function loadAllAlbums(): Promise<AlbumMetadata[]> {
+  const albumsRoot = getAlbumsRootPath();
+  try {
+    const folders = await RNFS.readDir(albumsRoot);
+    const albumFolders = folders.filter(entry => entry.isDirectory());
+
+    const albums: AlbumMetadata[] = [];
+
+    for (const folder of albumFolders) {
+      try {
+        const metaPath = `${folder.path}/album.json`;
+        const content = await RNFS.readFile(metaPath, 'utf8');
+        const metadata: AlbumMetadata = JSON.parse(content);
+        albums.push(metadata);
+      } catch (e) {
+        console.warn(
+          '[AlbumStorage] Skipping folder with missing/invalid metadata:',
+          folder.name,
+        );
+      }
+    }
+
+    return albums;
+  } catch (err) {
+    console.error('[AlbumStorage] Error loading all albums:', err);
+    return [];
+  }
+}
+
+export async function deleteAlbumById(albumId: string): Promise<void> {
+  const albumFolder = `${getAlbumsRootPath()}/${albumId}`;
+  const exists = await RNFS.exists(albumFolder);
+  if (exists) {
+    await RNFS.unlink(albumFolder);
+  }
 }

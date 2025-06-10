@@ -8,6 +8,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import ImagePicker, {ImageOrVideo} from 'react-native-image-crop-picker';
+import {PHOTOS_SELECTION} from '../constants/layout';
 
 type Props = {
   onImagesPicked: (paths: string[]) => void;
@@ -53,7 +54,7 @@ const ImagePickerButton: React.FC<Props> = ({onImagesPicked}) => {
       const images: ImageOrVideo[] = await ImagePicker.openPicker({
         multiple: true,
         mediaType: 'photo',
-        maxFiles: 6,
+        maxFiles: PHOTOS_SELECTION,
       });
 
       const paths = images.map(img => img.path);

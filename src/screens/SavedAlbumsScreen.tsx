@@ -1,125 +1,153 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useState} from 'react';
 import {
   View,
   Text,
   FlatList,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
   Alert,
 } from 'react-native';
-import RNFS from 'react-native-fs';
-import {useNavigation} from '@react-navigation/native';
-import type {AlbumsStackParamList} from '../navigation/AlbumsStack';
-import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {useFocusEffect} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {RootStackParamList} from '../navigation/AppNavigator';
+import {
+  loadAllAlbums,
+  AlbumMetadata,
+  deleteAlbumById,
+} from '../utils/AlbumStorage';
 
-interface AlbumEntry {
-  id: string;
-  name: string;
+type SavedAlbumsScreenNavProp = StackNavigationProp<
+  RootStackParamList,
+  'SavedAlbums'
+>;
+
+interface Props {
+  navigation: SavedAlbumsScreenNavProp;
 }
 
-const SavedAlbumsScreen = () => {
-  const [albums, setAlbums] = useState<AlbumEntry[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const navigation =
-    useNavigation<NativeStackNavigationProp<AlbumsStackParamList>>();
+const SavedAlbumsScreen: React.FC<Props> = ({navigation}) => {
+  const [albums, setAlbums] = useState<AlbumMetadata[]>([]);
 
-  useEffect(() => {
-    const loadAlbums = async () => {
-      try {
-        const albumsRoot = RNFS.DocumentDirectoryPath + '/Albums';
-        const exists = await RNFS.exists(albumsRoot);
-        if (!exists) {
-          // If no Albums folder yet, just show empty list
-          setAlbums([]);
-          setLoading(false);
-          return;
-        }
+  const loadAlbums = async () => {
+    const all = await loadAllAlbums();
+    setAlbums(all);
+  };
 
-        // Read all subfolders under Albums/
-        const dirItems = await RNFS.readDir(albumsRoot);
-        // dirItems contains objects with { name, path, isFile(), isDirectory() }
+  useFocusEffect(
+    useCallback(() => {
+      loadAlbums();
+    }, []),
+  );
 
-        const entries: AlbumEntry[] = [];
-        for (const item of dirItems) {
-          if (item.isDirectory()) {
-            const albumId = item.name;
-            const metaPath = `${item.path}/album.json`;
-            const metaExists = await RNFS.exists(metaPath);
-            if (metaExists) {
-              const content = await RNFS.readFile(metaPath, 'utf8');
-              const parsed = JSON.parse(content);
-              // Expect parsed to have a `name` field
-              entries.push({id: albumId, name: parsed.name});
-            }
-          }
-        }
+  const handleAlbumPress = (albumId: string) => {
+    navigation.navigate('Album', {albumId});
+  };
 
-        setAlbums(entries);
-      } catch (err) {
-        console.warn('Error loading saved albums', err);
-        Alert.alert('Error', 'Failed to load saved albums.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadAlbums();
-  }, []);
-
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
-  }
-
-  if (albums.length === 0) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.emptyText}>No albums found.</Text>
-      </View>
-    );
-  }
+  const handleDelete = (albumId: string) => {
+    Alert.alert('Delete Album', 'Are you sure you want to delete this album?', [
+      {text: 'Cancel', style: 'cancel'},
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          await deleteAlbumById(albumId);
+          loadAlbums();
+        },
+      },
+    ]);
+  };
 
   return (
-    <FlatList
-      data={albums}
-      keyExtractor={item => item.id}
-      contentContainerStyle={styles.listContainer}
-      renderItem={({item}) => (
-        <TouchableOpacity
-          style={styles.albumItem}
-          onPress={() =>
-            navigation.navigate('Album', {
-              albumId: item.id,
-            })
-          }>
-          <Text style={styles.albumName}>{item.name}</Text>
-        </TouchableOpacity>
-      )}
-    />
+    <View style={styles.container}>
+      <Text style={styles.title}>Saved Albums</Text>
+      <FlatList
+        data={albums}
+        keyExtractor={item => item.id}
+        renderItem={({item}) => (
+          <View style={styles.albumCard}>
+            <TouchableOpacity
+              style={styles.albumInfo}
+              onPress={() => handleAlbumPress(item.id)}>
+              <Text style={styles.albumName}>{item.name}</Text>
+              <Text style={styles.albumMeta}>
+                Photos per page: {item.photosPerPage}
+              </Text>
+              <Text style={styles.albumMeta}>Photos: {item.images.length}</Text>
+            </TouchableOpacity>
+            <View style={styles.actions}>
+              <TouchableOpacity
+                onPress={() => handleDelete(item.id)}
+                style={styles.deleteButton}>
+                <Text style={styles.actionText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>No albums created yet.</Text>
+        }
+      />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  center: {
+  container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+    padding: 16,
   },
-  emptyText: {fontSize: 18, color: '#666'},
-  listContainer: {padding: 15},
-  albumItem: {
-    padding: 15,
+  title: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  albumCard: {
+    backgroundColor: '#f4f4f4',
     borderRadius: 8,
-    backgroundColor: '#f8f8f8',
     marginBottom: 10,
-    elevation: 1,
+    padding: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  albumName: {fontSize: 16, fontWeight: '500'},
+  albumInfo: {
+    flex: 1,
+  },
+  albumName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  albumMeta: {
+    fontSize: 14,
+    color: '#555',
+  },
+  actions: {
+    flexDirection: 'column',
+    marginLeft: 10,
+  },
+  editButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: '#4CAF50',
+    borderRadius: 5,
+    marginBottom: 6,
+  },
+  deleteButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: '#f44336',
+    borderRadius: 5,
+  },
+  actionText: {
+    color: 'white',
+    fontWeight: '600',
+  },
+  emptyText: {
+    textAlign: 'center',
+    marginTop: 20,
+    color: '#888',
+  },
 });
 
 export default SavedAlbumsScreen;

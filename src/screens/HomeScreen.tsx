@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useCallback} from 'react';
 import {
   View,
   Text,
@@ -10,12 +10,17 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import {Picker} from '@react-native-picker/picker';
-import {PHOTOS_PER_PAGE_OPTIONS} from '../constants/layout';
+import {
+  DEFAULT_ALBUM_NAME,
+  PHOTOS_PER_PAGE_OPTIONS,
+  DEFAULT_PHOTO_PER_PAGE,
+} from '../constants/layout';
 import ImagePickerButton from '../components/ImagePickerButton';
 import PhotoGrid from '../components/PhotoGrid';
 import {saveNewAlbum, AlbumMetadata} from '../utils/AlbumStorage';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {RootStackParamList} from '../navigation/AppNavigator';
+import {useFocusEffect} from '@react-navigation/native';
 
 type HomeScreenNavProp = StackNavigationProp<RootStackParamList, 'Home'>;
 
@@ -26,8 +31,16 @@ interface HomeScreenProps {
 const HomeScreen: React.FC<HomeScreenProps> = ({navigation}) => {
   const [selectedPaths, setSelectedPaths] = useState<string[]>([]);
   const [photosPerPage, setPhotosPerPage] = useState<number>(4);
-  const [albumName, setAlbumName] = useState<string>('My Album');
+  const [albumName, setAlbumName] = useState<string>(DEFAULT_ALBUM_NAME);
   const [saving, setSaving] = useState<boolean>(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      setSelectedPaths([]);
+      setAlbumName(DEFAULT_ALBUM_NAME);
+      setPhotosPerPage(DEFAULT_PHOTO_PER_PAGE);
+    }, []),
+  );
 
   const onSaveAlbum = async () => {
     if (selectedPaths.length === 0) {
@@ -38,8 +51,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({navigation}) => {
       Alert.alert('Invalid Name', 'Please enter an album name.');
       return;
     }
-    // Double-check permissions again before saving:
-    // (You could repeat the same permission check you did in ImagePickerButton)
+
     setSaving(true);
     try {
       const metadata: AlbumMetadata = await saveNewAlbum(
@@ -52,7 +64,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({navigation}) => {
     } catch (err) {
       console.warn('Error saving album', err);
       setSaving(false);
-      // saveNewAlbum already shows an Alert with the detailed message
     }
   };
 
@@ -82,7 +93,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({navigation}) => {
           <Text style={{marginVertical: 10, fontWeight: '600'}}>
             Preview ({selectedPaths.length} selected)
           </Text>
-          {/* Instead of giving a fixed height, let it expand. The ScrollView parent will allow vertical scrolling. */}
           <PhotoGrid
             uris={selectedPaths.map(p => 'file://' + p)}
             numColumns={3}

@@ -5,11 +5,17 @@ import {createStackNavigator} from '@react-navigation/stack';
 import HomeScreen from '../screens/HomeScreen';
 import AlbumScreen from '../screens/AlbumScreen';
 
+// export type RootStackParamList = {
+//   Home: undefined;
+//   Album: {albumId: string};
+// };
+
 export type RootStackParamList = {
   Home: undefined;
   Album: {albumId: string};
+  SavedAlbums: undefined;
+  EditAlbum: {albumId: string};
 };
-
 const Stack = createStackNavigator<RootStackParamList>();
 
 const AppNavigator = () => (
